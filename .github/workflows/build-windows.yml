@@ -1,0 +1,22 @@
+name: Build GAZYAVA (Windows VST3)
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -A x64
+      - name: Build
+        run: cmake —build build —config Release —parallel
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item -Recurse «build/GAZYAVA_artefacts/Release/VST3/GAZYAVA.vst3» dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GAZYAVA-VST3-Windows
+          path: dist/
