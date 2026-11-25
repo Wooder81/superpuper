@@ -1,0 +1,34 @@
+name: Build GAZYAVA (Windows VST3)
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B build -A x64
+          Write-Host "--- contents of build ---"
+          Get-ChildItem build | ForEach-Object { Write-Host $_.Name }
+      - name: Build
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Path build -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { Write-Host "NO SLN FOUND"; exit 1 }
+          Write-Host "Building $($sln.FullName)"
+          msbuild $sln.FullName /p:Configuration=Release /m
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $found = Get-ChildItem -Path build -Recurse -Directory -Filter *.vst3
+          $found | ForEach-Object { Write-Host "FOUND: $($_.FullName)" }
+          $found | ForEach-Object { Copy-Item -Recurse $_.FullName dist/ }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GAZYAVA-VST3-Windows
+          path: dist/
