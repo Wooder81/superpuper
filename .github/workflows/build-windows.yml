@@ -7,7 +7,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: microsoft/setup-msbuild@v2
       - name: Configure
         shell: pwsh
         run: |
@@ -16,11 +15,7 @@ jobs:
           Get-ChildItem build | ForEach-Object { Write-Host $_.Name }
       - name: Build
         shell: pwsh
-        run: |
-          $sln = Get-ChildItem -Path build -Filter *.sln | Select-Object -First 1
-          if (-not $sln) { Write-Host "NO SLN FOUND"; exit 1 }
-          Write-Host "Building $($sln.FullName)"
-          msbuild $sln.FullName /p:Configuration=Release /m
+        run: cmake --build build --config Release --parallel
       - name: Package
         shell: pwsh
         run: |
